@@ -2,20 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Your Agency</title>
+    <title>{{ agency.name }} Agency</title>
 </head>
 <body>
     <h2>Your Assigned Agency</h2>
 
     {% if agency %}
         <p><strong>Agency Name:</strong> {{ agency.name }}</p>
-        <p><strong>Description:</strong> {{ agency.description }}</p>
+        <p><strong>Towns:</strong> {{ agency.description }}</p>
         <p><strong>Image:</strong></p>
         <img src="{{ agency.image.url }}" alt="{{ agency.name }}" width="200"><br>
     {% endif %}
 
-    <button><a href="#">Create travels</a></button>
+    <button><a href="{% url 'create_travel' %}">Create travels</a></button>
 
-    <a href="{% url 'home' %}">Back to Home</a>
+    <a href="{% url 'logout' %}">Logout</a>
 </body>
 </html>

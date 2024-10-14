@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Travel Plan</title>
+</head>
+<body>
+    <h2>Update Travel Plan</h2>
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" action="{% url 'update_travel_plan' %}">
+        {% csrf_token %}
+        <label for="destination">Destination:</label>
+        <input type="text" id="destination" name="destination" value="{{ travel_plan.destination }}" required><br>
+
+        <label for="departure">Departure:</label>
+        <input type="text" id="departure" name="departure" value="{{ travel_plan.departure }}" required><br>
+
+        <label for="time">Time:</label>
+        <input type="time" id="time" name="time" value="{{ travel_plan.time }}" required><br>
+
+        <label for="date">Date:</label>
+        <input type="date" id="date" name="date" value="{{ travel_plan.date }}" required><br>
+
+        <label for="price">Price (USD):</label>
+        <input type="number" id="price" name="price" value="{{ travel_plan.price }}" required><br>
+
+        <label for="number_of_places">Number of Places:</label>
+        <input type="number" id="number_of_places" name="number_of_places" value="{{ travel_plan.number_of_places }}" required><br>
+
+        <label for="status">Status:</label>
+        <select id="status" name="status" required>
+            <option value="active" {% if travel_plan.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="complete" {% if travel_plan.status == 'complete' %}selected{% endif %}>Complete</option>
+        </select><br>
+
+        <button type="submit">Update Travel Plan</button>
+    </form>
+
+    <a href="{% url 'list_agency_travel_plans' %}">Back to Travel Plans</a>
+</body>
+</html>

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, Profile, Destination, Accommodation, Hotel, Booking, Agency
+from .models import CustomUser, Profile, Destination, Accommodation, Hotel, Booking, Agency, Reservation
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth import get_user_model
 
@@ -13,6 +13,8 @@ class CustomUserAdmin(UserAdmin):
     def has_add_permission(self, request):
         return request.user.is_superuser
 admin.site.register(CustomUser, CustomUserAdmin)
+
+admin.site.register(Reservation)
 
 
 class ProfileAdmin(admin.ModelAdmin):

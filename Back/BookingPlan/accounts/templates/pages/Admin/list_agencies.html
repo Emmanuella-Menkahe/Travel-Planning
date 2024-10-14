@@ -31,6 +31,10 @@
                         {% endif %}
                     </td>
                     <td>
+                        <button><a href="{% url 'list_agency_travel_plans' agency.id %}">Travel Plans</a></button>
+                    </td>
+
+                    <td>
                         <button><a href="{% url 'update_agency' agency.id %}">Update</a></button>
                     </td>
                     <td>

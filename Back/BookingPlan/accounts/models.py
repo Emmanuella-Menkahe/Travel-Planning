@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.core.exceptions import ValidationError
+
 
 class Accommodation(models.Model):
     ACCOMMODATION_TYPES = (
@@ -43,6 +45,79 @@ class Agency(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class TravelPlan(models.Model):
+    STATUS_CHOICES = [
+        ('complete', 'Complete'),
+        ('active', 'Active'),
+    ]
+    
+    departure = models.CharField(max_length=100)
+    time = models.TimeField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField()
+    destination = models.CharField(max_length=100)
+    number_of_places = models.PositiveIntegerField()
+    number_of_available_places = models.PositiveIntegerField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    agency = models.ForeignKey(Agency, on_delete=models.CASCADE)  
+
+    def __str__(self):
+        return f"{self.departure} to {self.destination} on {self.date}"
+    
+    def is_complete(self):
+        return self.status == 'complete'
+    
+    def update_available_places(self, booked_places):
+        """Update available places when bookings are made."""
+        if self.number_of_available_places >= booked_places:
+            self.number_of_available_places -= booked_places
+            self.save()
+        else:
+            raise ValueError("Not enough available places.")
+        
+
+class Reservation(models.Model):
+    travel_plan = models.ForeignKey('TravelPlan', on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    number_of_places = models.PositiveIntegerField()
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    id_card_number = models.CharField(max_length=50)
+    reserved_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        # Ensure the travel plan is active
+        if self.travel_plan.status != 'active':
+            raise ValidationError('Reservations can only be made for active travel plans.')
+
+        # Ensure the number of places is positive
+        if self.number_of_places <= 0:
+            raise ValidationError('The number of places must be greater than zero.')
+
+        # Ensure the number of places does not exceed available places
+        if self.number_of_places > self.travel_plan.number_of_available_places:
+            raise ValidationError('The number of places requested exceeds the available places.')
+
+        # Calculate the total price based on the travel plan's price  
+        self.total_price = self.number_of_places * self.travel_plan.price
+
+        # Validate ID card number (e.g., should be alphanumeric and have a certain length)
+        if not self.id_card_number.isalnum() or len(self.id_card_number) < 5:
+            raise ValidationError('The ID card number must be alphanumeric and at least 5 characters long.')
+
+    def save(self, *args, **kwargs):
+        # Perform validation before saving
+        self.full_clean()
+        # Update the number of available places in the travel plan
+        self.travel_plan.number_of_available_places -= self.number_of_places
+        self.travel_plan.save()
+        # Save the reservation
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Reservation by {self.user.username} for {self.travel_plan.destination}"
+
 
 
 class Profile(models.Model):

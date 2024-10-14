@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Reservation</title>
+</head>
+<body>
+    <h2>Create Reservation for {{ travel_plan.destination }}</h2>
+
+    <!-- Display success or error messages -->
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <!-- <li style="color: {% if message.tags == 'error' %}red{% else %}green{% endif %};"> -->
+                    {{ message }}
+                <!-- </li> -->
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <p>{{ travel_plan.departure }} to {{ travel_plan.destination }}</p>    
+    <form method="post" action="{% url 'reservation' %}">
+        {% csrf_token %}
+        <div>
+            <label for="number_of_places">Number of Places to Reserve:</label>
+            <input type="number" name="number_of_places" id="number_of_places" min="1" required>
+        </div>
+        <br>
+        <div>
+            <label for="id_card_number">ID Card Number:</label>
+            <input type="text" name="id_card_number" id="id_card_number" required>
+        </div>
+        <br>
+        <button type="submit">Reserve</button>
+    </form>
+
+    <br>
+    <a href="{% url 'list_all_travel_plans' %}">Back to Travel Plans</a>
+</body>
+</html>

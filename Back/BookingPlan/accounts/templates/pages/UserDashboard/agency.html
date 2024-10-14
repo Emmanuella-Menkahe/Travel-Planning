@@ -1,13 +1,14 @@
 {% extends "pages/UserDashboard/base.html" %}
 {% load static %}
-{% block content %}
+{% block content %}  
     <div class="container">
         <div class="search-bar">
             <input type="text" placeholder="Find your destination">
             <button><i class="fa fa-search"></i></button>
         </div>
-
+        
         <div class="agency">
+            <a href="{% url 'list_all_travel_plans' %}">View All Travel Plans</a>
             {% for agency in agencies %}
                 <div class="agency-item">
                     <img src="{% static agency.image %}" alt="{{ agency.name }}">
@@ -15,67 +16,9 @@
                         <h3>{{ agency.name }}</h3>
                         <p>{{ agency.description }}</p>    
                     </div>
-                    <button class="btn"><a href="./bookAgency.html">Travels</a></button>
+                    <button class="btn"><a href="{% url 'list_agency_travel_client' agency.id %}">Travel Plans</a></button>
                 </div>
             {% endfor %}
-
-            <!-- <div class="agency-item">
-                <img src="./../../Assets/images/agencies/finex.jfif" alt="Finex" width="100px" height="65px">
-                <div class="des">
-                    <h3>Finex Voyage (First National Express of Safety)</h3>
-                    <p>Douala, Yaounde</p>    
-                </div>
-                <button class="btn"><a href="./bookAgency.html">Reserve Now</a></button>
-            </div>
-            <div class="agency-item">
-                <img src="./../../Assets/images/agencies/general.png" alt="General">
-                <div class="des">
-                    <h3>General Voyage</h3>
-                    <p>Douala, Yaounde, Bafoussam, Dschang, Mbouda</p>    
-                </div>
-                <button class="btn"><a href="./bookAgency.html">Reserve Now</a></button>
-            </div>
-            <div class="agency-item">
-                <img src="./../../Assets/images/agencies/united express.png" alt="United Express" >
-                <div class="des">
-                    <h3>United Express</h3>
-                    <p>Douala, Yaounde</p>    
-                </div>
-                <button class="btn"><a href="./bookAgency.html">Reserve Now</a></button>
-            </div>
-            <div class="agency-item">
-                <img src="./../../Assets/images/agencies/princess.png" alt="Princess">
-                <div class="des">
-                    <h3>Princess Voyage</h3>
-                    <p>Douala, Yaounde</p>    
-                </div>
-                <button class="btn"><a href="./bookAgency.html">Reserve Now</a></button>
-            </div>
-            <div class="agency-item">
-                <img src="./../../Assets/images/agencies/real.png" alt="Real">
-                <div class="des">
-                    <h3>Real Express</h3>
-                    <p>Douala, Bafoussam</p>    
-                </div>
-                <button class="btn"><a href="./bookAgency.html">Reserve Now</a></button>
-            </div>
-            <div class="agency-item">
-                <img src="./../../Assets/images/agencies/tresor.png" alt="Tresor">
-                <div class="des">
-                    <h3>Tresor Voyage</h3>
-                    <p>Douala, Bafoussam</p>    
-                </div>
-                <button class="btn"><a href="./bookAgency.html">Reserve Now</a></button>
-            </div>
-            <div class="agency-item">
-                <img src="./../../Assets/images/agencies/nso boyz.png" alt="Nso Boyz">
-                <div class="des">
-                    <h3>Nso Boyz Express</h3>
-                    <p>Yaounde, Bamenda</p>    
-                </div>
-                <button class="btn"><a href="./bookAgency.html">Reserve Now</a></button>
-            </div> -->
         </div>
-    </div>
-        
+    </div> 
 {% endblock %}

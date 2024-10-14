@@ -6,12 +6,14 @@ from django.contrib.auth.models import Group
 from django.contrib import messages
 from django.template.loader import render_to_string
 from django.http import HttpResponse
-from .models import CustomUser, Agency, Profile, Destination, Accommodation, Booking
+from .models import CustomUser, Agency, TravelPlan, Reservation,  Profile, Destination, Accommodation, Booking
 from .forms import ProfileForm
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from datetime import datetime, date
 from weasyprint import HTML
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 
 User = get_user_model()  # This will return the custom user model
 
@@ -29,7 +31,7 @@ def signup_view(request):
         try:
             user = CustomUser.objects.create_user(email=email, username=username, password=password1)
             auth_login(request, user)
-            return redirect('agencies_list')  
+            return redirect('list_agency')  
         except Exception as e:
             messages.error(request, f"Error creating user: {e}")
             return redirect('signup')
@@ -41,37 +43,39 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
         password1 = request.POST['password1']
-        user = authenticate(request, username=username, password1=password1)
+        user = authenticate(request, username=username, password=password1)
         if user is not None:
             auth_login(request, user)
-            if user.role == 'accommodation_receptionist':
+            if user.roles == 'accommodation_receptionist':
                 return redirect('accommodation_list')
-            elif user.role == 'agency_receptionist':
+            elif user.roles == 'agency_receptionist':
                 return redirect('agency_home')
-            elif user.role == 'admin':
+            elif user.roles == 'admin':
                 return redirect('admin_home')
+            elif user.roles == 'client':
+                return redirect('list_agency')
             else:
-                return redirect('destination')
+                return redirect('no')
         else:
             messages.error(request, 'Wrong username or password')
         
     return render(request, 'pages/login.html')
 
-def login(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password1 = request.POST['password1']
-        roles = request.POST['roles']
+# def login(request):
+#     if request.method == 'POST':
+#         username = request.POST['username']
+#         password1 = request.POST['password1']
 
-        user = authenticate(request, username=username, password1=password1, roles=roles)
+#         user = authenticate(request, username=username, password1=password1)
         
-        if user is not None:
-            login(request, user)
-            return redirect('agency_home')  
-        else:
-            messages.error(request, 'Invalid username or password')
+#         if user is not None:
+#             login(request, user)
+#             return redirect('agency_home')  
+#         else:
+#             messages.error(request, 'Invalid username or password')
+#             return render(request, 'pages/Admin/adminlogin.html')
 
-    return render(request, 'pages/Admin/adminlogin.html')
+#     return render(request, 'pages/Admin/adminlogin.html')
 
 
 def logout_view(request):
@@ -81,6 +85,10 @@ def logout_view(request):
 
 def home_view(request):
     return render(request, 'index.html')
+
+def home(request):
+    return render(request, 'pages/UserDashboard/no.html')
+
 
 @login_required
 def create_profile(request):
@@ -225,7 +233,18 @@ def edit_user_view(request, user_id):
 
 
 def agency_home_view(request):
-    return render(request, 'pages/Agency/agencyhome.html')
+    # Ensure the logged-in user is an agency receptionist
+    if request.user.roles != 'agency_receptionist':
+        messages.error(request, "You are not authorized to access this page.")
+        return redirect('home') 
+    
+    agency = Agency.objects.filter(agency_receptionist=request.user).first()
+
+    if not agency:
+        messages.error(request, "No agency is assigned to you.")
+        return redirect('home')  
+
+    return render(request, 'pages/Agency/agencyreceptionist.html', {'agency': agency})
 
 
 #@user_passes_test(lambda u: u.is_superuser)
@@ -318,17 +337,213 @@ def delete_agency_view(request, agency_id):
 @login_required
 def agency_receptionist(request):
     # Ensure the logged-in user is an agency receptionist
-    if request.user.roles != 'agency_receptionist':
-        messages.error(request, "You are not authorized to access this page.")
-        return redirect('home') 
+     if request.user.roles != 'agency_receptionist':
+         messages.error(request, "You are not authorized to access this page.")
+         return redirect('home') 
     
-    agency = Agency.objects.filter(agency_receptionist=request.user).first()
+     agency = Agency.objects.filter(agency_receptionist=request.user).first()
 
-    if not agency:
-        messages.error(request, "No agency is assigned to you.")
-        return redirect('home')  
+     if not agency:
+         messages.error(request, "No agency is assigned to you.")
+         return redirect('home')  
 
-    return render(request, 'pages/Agency/agencyreceptionist.html', {'agency': agency})
+     return render(request, 'pages/Agency/agencyreceptionist.html', {'agency': agency})
+
+
+###############################################################################################
+#                    Travel Plan View
+###############################################################################################
+
+
+
+#@login_required
+def create_travel_plan(request):
+    # Only allow users with role 'agency_receptionist'
+    if request.user.roles != 'agency_receptionist':
+        raise PermissionDenied("You do not have permission to create travel plans.")
+
+    # Get the agency assigned to the receptionist
+    try:
+        agency = Agency.objects.get(agency_receptionist=request.user)
+    except Agency.DoesNotExist:
+        raise PermissionDenied("You are not assigned to any agency.")
+    
+    if request.method == 'POST':
+        departure = request.POST.get('departure')
+        time = request.POST.get('time')
+        price = request.POST.get('price')
+        date = request.POST.get('date')
+        destination = request.POST.get('destination')
+        number_of_places = request.POST.get('number_of_places')
+        number_of_available_places = request.POST.get('number_of_available_places')
+        status = request.POST.get('status')
+
+        # Check if all required fields are provided
+        #if not all([departure, time, price, date, destination, number_of_places, number_of_available_places, status]):
+         #   return render(request, 'create_travel_plan.html', {'error': 'All fields are required.'})
+
+        date = datetime.strptime(date, '%Y-%m-%d').date()
+        
+        # Check if the travel date is in the future
+        if date <= date.today():
+            messages.error(request, 'The travel date must be in the future.')
+            return render(request, 'pages/Agency/createtravel.html')
+
+
+ # Create the travel plan for the agency
+        travel_plan = TravelPlan.objects.create(
+            departure=departure,
+            time=time,
+            date=date,
+            destination=destination,
+            price=price,
+            number_of_places=number_of_places,
+            number_of_available_places=number_of_places,  # Initially set available places as total places
+            status='active',  # Default to 'active'
+            agency=agency  # Assign the travel plan to the receptionist's agency
+        )
+        travel_plan.save()
+
+        return redirect('list_all_travel_plans')  
+
+    return render(request, 'pages/Agency/createtravel.html')
+
+
+def list_agency_travel_client(request, agency_id):
+    agency = get_object_or_404(Agency, id=agency_id)
+    
+    # Fetch the travel plans associated with this agency
+    travel_plans = TravelPlan.objects.filter(agency=agency)
+    return render(request, 'pages/UserDashboard/listtravel.html', {'agency': agency,'travel_plans': travel_plans})
+
+
+
+def list_agency_travel_plans(request, agency_id):
+    agency = get_object_or_404(Agency, id=agency_id)
+    
+    # Fetch the travel plans associated with this agency
+    travel_plans = TravelPlan.objects.filter(agency=agency)
+    return render(request, 'pages/Agency/listtravel.html', {'agency': agency,'travel_plans': travel_plans})
+
+def list_all_travel_plans(request):
+    travel_plans = TravelPlan.objects.all()
+    return render(request, 'pages/Admin/list_all_travel_plans.html', {'travel_plans': travel_plans})
+
+# @login_required
+# def list_travel_plans(request, agency_id=None):
+#     # If the user is an agency receptionist
+#     if request.user.roles == 'agency_receptionist':
+#         # Restrict to only travel plans of the receptionist's assigned agency
+#         travel_plans = TravelPlan.objects.filter(agency=request.user.agency)
+
+#     else:
+#         if agency_id:
+#             # Get the specified agency and list its travel plans
+#             agency = get_object_or_404(Agency, id=agency_id)
+#             travel_plans = TravelPlan.objects.filter(agency=agency)
+#         else:
+#             # Show all travel plans if no specific agency is selected (admins only)
+#             if request.user.roles == 'admin':
+#                 travel_plans = TravelPlan.objects.all()
+#             else:
+#                 # For clients, show nothing if no agency is specified
+#                 travel_plans = TravelPlan.objects.none()
+
+#     return render(request, 'pages/Agebcy/listtravel.html', {'travel_plans': travel_plans})
+
+
+
+def update_travel_plan(request, travel_plan_id):
+    # Retrieve the travel plan or return 404 if it doesn't exist
+    travel_plan = get_object_or_404(TravelPlan, id=travel_plan_id)
+    agency = travel_plan.agency
+
+    if not request.user.is_authenticated or request.user != agency.agency_receptionist:
+        messages.error(request, 'You do not have permission to update this travel plan.')
+        return redirect('')
+
+    if request.method == 'POST':
+        destination = request.POST.get('destination')
+        departure = request.POST.get('departure')
+        time = request.POST.get('time')
+        date = request.POST.get('date')
+        price = request.POST.get('price')
+        number_of_places = request.POST.get('number_of_places')
+        status = request.POST.get('status')
+
+        # Convert the travel_date to a date object
+        date = datetime.strptime(date, '%Y-%m-%d').date()
+
+        if date <= datetime.today().date():
+            messages.error(request, 'The travel date must be in the future.')
+            return render(request, 'pages/Agency/updatetravel.html', {'travel_plan': travel_plan})
+
+        travel_plan.destination = destination
+        travel_plan.departure = departure
+        travel_plan.time = time
+        travel_plan.date = date
+        travel_plan.price = price
+        travel_plan.number_of_places = number_of_places
+        travel_plan.status = status
+        travel_plan.number_of_available_places = number_of_places
+
+        travel_plan.save()
+
+        messages.success(request, 'Travel plan updated successfully.')
+        return redirect('list_agency_travel_plans', agency_id=agency.id)
+
+    return render(request, 'pages/Agency/updatetravel.html', {'travel_plan': travel_plan})
+
+
+def delete_travel_plan(request, travel_plan_id):
+    travel_plan = get_object_or_404(TravelPlan, id=travel_plan_id)
+    agency = travel_plan.agency
+
+    if not request.user.is_authenticated or request.user != agency.agency_receptionist:
+        messages.error(request, 'You do not have permission to delete this travel plan.')
+        return redirect('')
+
+    travel_plan.delete()
+    messages.success(request, 'Travel plan deleted successfully.')
+    return redirect('list_agency_travel_plans', agency_id=agency.id)
+
+
+
+###############################################################################################
+#                    Reservation View
+###############################################################################################
+
+
+def reservation(request, travel_plan_id):
+    travel_plan = get_object_or_404(TravelPlan, id=travel_plan_id)
+
+    if request.method == 'POST':
+        number_of_places = request.POST.get('number_of_places')
+        id_card_number = request.POST.get('id_card_number')
+
+        reservation = Reservation(
+            travel_plan=travel_plan,
+            user=request.user,
+            number_of_places=number_of_places,
+            id_card_number=id_card_number
+        )
+
+        try:
+            reservation.save()
+            messages.success(request, 'Reservation successfully.')
+            return redirect('list_travel_plans')
+        except ValidationError as e:
+            messages.error(request, ', '.join(e.messages))
+
+    return render(request, 'pages/UserDashboard/reservation.html',  {'travel_plan': travel_plan})
+
+
+
+
+
+
+
+
 
 
 

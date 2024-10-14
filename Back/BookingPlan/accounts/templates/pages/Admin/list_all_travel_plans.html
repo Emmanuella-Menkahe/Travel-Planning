@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Travel Plans</title>
+    <style>
+        .travel-plan-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-around;
+        }
+        .travel-plan {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            width: 300px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .travel-plan h3 {
+            margin-top: 0;
+        }
+        .travel-plan p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h2>All Travel Plans</h2>
+
+    {% if travel_plans %}
+    <div class="travel-plan-list">
+        {% for plan in travel_plans %}
+        <div class="travel-plan">
+            <h3>Destination: {{ plan.destination }}</h3>
+            <p><strong>Departure:</strong> {{ plan.departure }}</p>
+            <p><strong>Time:</strong> {{ plan.time }}</p>
+            <p><strong>Date:</strong> {{ plan.date }}</p>
+            <p><strong>Price:</strong> {{ plan.price }} FCFA</p>
+            <p><strong>Status:</strong> {{ plan.status }}</p>
+            <p><strong>Available Places:</strong> {{ plan.number_of_available_places }} / {{ plan.number_of_places }}</p>
+            <p><strong>Agency:</strong> {{ plan.agency.name }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No travel plans available.</p>
+    {% endif %}
+
+    <a href="{% url 'admin_home' %}">Admin Home</a>
+</body>
+</html>

@@ -9,6 +9,7 @@ urlpatterns = [
     path('', views.home_view, name='home'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),
     path('create_profile/', views.create_profile, name='create_profile'),
+    path('no/', views.home, name='no'),
 
 
     path('admin_home/', views.admin_home_view, name='admin_home'),
@@ -19,13 +20,23 @@ urlpatterns = [
     path('agencies/', views.list_agencies_view, name='list_agencies'),
     path('agency/update/<int:agency_id>/', views.update_agency_view, name='update_agency'),
     path('agency/delete/<int:agency_id>/', views.delete_agency_view, name='delete_agency'),
+    path('travel-plans/', views.list_all_travel_plans, name='list_all_travel_plans'),
 
 
-    path('agency_login/', views.login, name='agency_login'),
+    #path('agency_login/', views.login, name='agency_login'),
     path('agency_home/', views.agency_home_view, name='agency_home'),
     path('my-agency/', views.agency_receptionist, name='agency_receptionist'),
     path('listagencies/', views.list_agencies, name='list_agency'),
 
+
+    path('travel-plans/create/', views.create_travel_plan, name='create_travel'),
+    path('travel-plans/agency/<int:agency_id>/', views.list_agency_travel_plans, name='list_agency_travel_plans'),  # View by agency (admins)
+    path('travel-plan/agency/<int:agency_id>/', views.list_agency_travel_client, name='list_agency_travel_client'),  # View by agency (clients)
+    path('travel-plan/update/<int:travel_plan_id>/', views.update_travel_plan, name='update_travel_plan'),
+    #path('travel-plans/', views.list_travel_plans, name='list_travel'),  # View all (admins)
+
+
+    path('reservation/<int:travel_plan_id>/', views.reservation, name='reservation'),
 
 
     path('destination/', views.dashboard_view, name='destination'),
