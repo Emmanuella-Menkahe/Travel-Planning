@@ -425,9 +425,15 @@ def list_agency_travel_plans(request, agency_id):
     travel_plans = TravelPlan.objects.filter(agency=agency)
     return render(request, 'pages/Agency/listtravel.html', {'agency': agency,'travel_plans': travel_plans})
 
+
 def list_all_travel_plans(request):
     travel_plans = TravelPlan.objects.all()
     return render(request, 'pages/Admin/list_all_travel_plans.html', {'travel_plans': travel_plans})
+
+def list_all_travel_plan(request):
+    travel_plans = TravelPlan.objects.all()
+    return render(request, 'pages/UserDashboard/list_all_travel_plans.html', {'travel_plans': travel_plans})
+
 
 # @login_required
 # def list_travel_plans(request, agency_id=None):
@@ -514,8 +520,8 @@ def delete_travel_plan(request, travel_plan_id):
 ###############################################################################################
 
 
-def reservation(request, travel_plan_id):
-    travel_plan = get_object_or_404(TravelPlan, id=travel_plan_id)
+def reservation(request, pk):
+    travel_plan = get_object_or_404(TravelPlan, pk=pk)
 
     if request.method == 'POST':
         number_of_places = request.POST.get('number_of_places')

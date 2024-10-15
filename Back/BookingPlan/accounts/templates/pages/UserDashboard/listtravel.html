@@ -1,51 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Travel Plans</title>
-    <style>
-        .travel-plan-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: space-around;
-        }
-        .travel-plan {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-            width: 300px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .travel-plan h3 {
-            margin-top: 0;
-        }
-        .travel-plan p {
-            margin: 5px 0;
-        }
-    </style>
-</head>
-<body>
-    <h2>{{ agency.name }} Travel Plans</h2>
+{% extends "pages/UserDashboard/base.html" %}
+{% load static %}
 
-    {% if travel_plans %}
-    <div class="travel-plan-list">
-        {% for travel_plan in travel_plans %}
-        <div class="travel-plan">
-            <h3>Destination: {{ travel_plan.destination }}</h3>
-            <p><strong>Departure:</strong> {{ travel_plan.departure }}</p>
-            <p><strong>Time:</strong> {{ travel_plan.time }}</p>
-            <p><strong>Date:</strong> {{ travel_plan.date }}</p>
-            <p><strong>Price:</strong> {{ travel_plan.price }} FCFA</p>
-            <p><strong>Status:</strong> {{ travel_plan.status }}</p>
-            <p><strong>Available Places:</strong> {{ travel_plan.number_of_available_places }} / {{ travel_plan.number_of_places }}</p>
-            <button><a href="{% url 'reservation' travel_plan.id %}">Reserve</a></button>
+{% block content %}
+<div class="content">
+    <div class="plan">
+        <h2>{{ agency.name }} Travel Plans</h2>
+
+        {% if travel_plans %}
+        <div class="travel-plan-list">
+            {% for travel_plan in travel_plans %}
+            <div class="travel-plan">
+                <p><strong>{{ travel_plan.departure }}</strong> to <strong>{{ travel_plan.destination }}</strong></p>
+                <p><strong>Price:</strong> {{ travel_plan.price }} FCFA</p>
+                <p><strong>Date:</strong> {{ travel_plan.date }} at {{ travel_plan.time }}</p>
+                <p><strong>Available Places:</strong> {{ travel_plan.number_of_available_places }} / {{ travel_plan.number_of_places }}</p>
+                <p><strong>Status:</strong> {{ travel_plan.status }}</p>
+                <button class="btn"><a href="{% url 'reservation' travel_plan.pk %}">Reserve</a></button>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
+        {% else %}
+        <p>No travel plans available.</p>
+        {% endif %}
+        <!-- <a href="{% url 'list_agency' %}">Back</a> -->
     </div>
-    {% else %}
-    <p>No travel plans available.</p>
-    {% endif %}
-    <a href="{% url 'list_agency' %}">Back</a>
-</body>
-</html>
+</div>
+{% endblock %}

@@ -30,13 +30,14 @@ urlpatterns = [
 
 
     path('travel-plans/create/', views.create_travel_plan, name='create_travel'),
-    path('travel-plans/agency/<int:agency_id>/', views.list_agency_travel_plans, name='list_agency_travel_plans'),  # View by agency (admins)
-    path('travel-plan/agency/<int:agency_id>/', views.list_agency_travel_client, name='list_agency_travel_client'),  # View by agency (clients)
+    path('travel-plans/agency/<int:agency_id>/', views.list_agency_travel_plans, name='list_agency_travel_plans'),  # View by agency 
+    path('travel-plan/agency/<int:agency_id>/', views.list_agency_travel_client, name='list_agency_travel_client'),  # View by clients
     path('travel-plan/update/<int:travel_plan_id>/', views.update_travel_plan, name='update_travel_plan'),
+    path('travel-plan/', views.list_all_travel_plan, name='list_all_travel_plan'),
     #path('travel-plans/', views.list_travel_plans, name='list_travel'),  # View all (admins)
 
 
-    path('reservation/<int:travel_plan_id>/', views.reservation, name='reservation'),
+    path('reservation/<int:pk>/', views.reservation, name='reservation'),
 
 
     path('destination/', views.dashboard_view, name='destination'),

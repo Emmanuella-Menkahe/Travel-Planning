@@ -1,0 +1,27 @@
+{% extends "pages/UserDashboard/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content">
+    <h2>All Travel Plans</h2>
+
+    {% if travel_plans %}
+    <div class="travel-plan-list">
+        {% for plan in travel_plans %}
+        <div class="travel-plan">
+            <h3>{{ plan.agency.name }}</h3>
+            <p><strong>{{ plan.departure }}</strong> to  <strong>{{ plan.destination }}</strong></p>
+            <p><strong>Price:</strong> {{ plan.price }} FCFA</p>
+            <p><strong>Date:</strong> {{ plan.date }} at {{ plan.time }}</p>
+            <p><strong>Available Places:</strong> {{ plan.number_of_available_places }} / {{ plan.number_of_places }}</p>
+            <p><strong>Status:</strong> {{ plan.status }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No travel plans available.</p>
+    {% endif %}
+
+    <!-- <a href="{% url 'list_agency' %}">Back</a> -->
+</div>
+{% endblock %}

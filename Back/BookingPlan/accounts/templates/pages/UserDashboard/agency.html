@@ -3,12 +3,12 @@
 {% block content %}  
     <div class="container">
         <div class="search-bar">
-            <input type="text" placeholder="Find your destination">
+            <input type="text" placeholder="Find by agency or destination">
             <button><i class="fa fa-search"></i></button>
         </div>
         
         <div class="agency">
-            <a href="{% url 'list_all_travel_plans' %}">View All Travel Plans</a>
+            <a href="{% url 'list_all_travel_plan' %}" class="all"><strong>View All Travel Plans</strong></a>
             {% for agency in agencies %}
                 <div class="agency-item">
                     <img src="{% static agency.image %}" alt="{{ agency.name }}">

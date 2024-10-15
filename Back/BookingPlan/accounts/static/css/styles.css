@@ -1,12 +1,11 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: red;
     margin: 0;
     padding: 0;
 }
 
 header{
-    background: url('./../image/destinations/cam3.jpg') no-repeat center center;
+    background: url('./../image/agency/background.jpg') no-repeat center center;
     background-size: cover;
 
 }
@@ -51,40 +50,44 @@ header{
 
 
 /* Section: Destination */
-.destination .text{
-    padding-left: 50px;
+.AboutUs{
+    margin-top: 50px;
+    margin-bottom: 20px;
+    height: 500px;
+    background-color: #44bbf1b9;
 }
 
-h2 {
-    font-weight: bold;
+.AboutUs .content{
+    display: flex;
+    margin-top: 5px;
+    gap: 100px;
+    height: 400px;
+
 }
 
-.carousel-item {
-    padding: 15px;
+.AboutUs h3{
+    text-align: center;
+    font-size: 50px;
 }
 
-.card {
-    border: none;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.AboutUs .des{
+    width: 500px;
+    height: 180px;
+    margin-top: 220px;
+    margin-left: 60px;
+    text-align: center;
 }
 
-.card-img-top {
-    height: 200px;
-    object-fit: cover;
+.AboutUs .img{
+    width: 350px;
+    height: 250px;
+    margin-top: 20px;
+    margin-right: 150px;
+    margin-left: 80px;
+  
 }
 
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-    background-color: #000;
-    border-radius: 50%;
-}
 
-.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-}
 
 /* Section: Footer */
 .footer {
