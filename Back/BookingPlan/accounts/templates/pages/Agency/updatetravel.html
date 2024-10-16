@@ -29,8 +29,11 @@
         <label for="date">Date:</label>
         <input type="date" id="date" name="date" value="{{ travel_plan.date }}" required><br>
 
-        <label for="price">Price (USD):</label>
+        <label for="price">Price (FCFA):</label>
         <input type="number" id="price" name="price" value="{{ travel_plan.price }}" required><br>
+
+        <label for="type">Type:</label>
+        <input type="text" id="type" name="type" value="{{ travel_plan.type }}" placeholder="simple, classic or vip" required><br>
 
         <label for="number_of_places">Number of Places:</label>
         <input type="number" id="number_of_places" name="number_of_places" value="{{ travel_plan.number_of_places }}" required><br>

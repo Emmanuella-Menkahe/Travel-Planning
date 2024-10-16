@@ -56,6 +56,7 @@ class TravelPlan(models.Model):
     departure = models.CharField(max_length=100)
     time = models.TimeField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    type = models.CharField(max_length=255, default='simple')
     date = models.DateField()
     destination = models.CharField(max_length=100)
     number_of_places = models.PositiveIntegerField()
@@ -76,15 +77,30 @@ class TravelPlan(models.Model):
             self.save()
         else:
             raise ValueError("Not enough available places.")
+    
+    def save(self, *args, **kwargs):
+        # Automatically set status to complete if no available places
+        if self.number_of_available_places == 0:
+            self.status = 'complete'
+        super().save(*args, **kwargs)
         
 
 class Reservation(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending Payment'),
+        ('paid', 'Paid'),
+        ('canceled', 'Canceled'),
+    )
+
     travel_plan = models.ForeignKey('TravelPlan', on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=255, default='Emmanuella Menkahe')
+    phone_number = models.PositiveIntegerField(default='237652996622')
     number_of_places = models.PositiveIntegerField()
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     id_card_number = models.CharField(max_length=50)
     reserved_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
 
     def clean(self):
         # Ensure the travel plan is active
@@ -93,11 +109,14 @@ class Reservation(models.Model):
 
         # Ensure the number of places is positive
         if self.number_of_places <= 0:
-            raise ValidationError('The number of places must be greater than zero.')
+            raise ValidationError('Reserve atleast 1 place.')
 
         # Ensure the number of places does not exceed available places
         if self.number_of_places > self.travel_plan.number_of_available_places:
             raise ValidationError('The number of places requested exceeds the available places.')
+        
+        if self.travel_plan.number_of_available_places == 0:
+            self.travel_plan.status = 'complete'
 
         # Calculate the total price based on the travel plan's price  
         self.total_price = self.number_of_places * self.travel_plan.price
@@ -112,6 +131,7 @@ class Reservation(models.Model):
         # Update the number of available places in the travel plan
         self.travel_plan.number_of_available_places -= self.number_of_places
         self.travel_plan.save()
+        #self.total_price=
         # Save the reservation
         super().save(*args, **kwargs)
 
@@ -119,6 +139,46 @@ class Reservation(models.Model):
         return f"Reservation by {self.user.username} for {self.travel_plan.destination}"
 
 
+class Notification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('info', 'Information'),
+        ('warning', 'Warning'),
+        ('success', 'Success'),
+        ('error', 'Error'),
+    )
+
+    recipient = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='notifications')
+    message = models.TextField()
+    notification_type = models.CharField(max_length=10, choices=NOTIFICATION_TYPES, default='info')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f'{self.notification_type.capitalize()} notification for {self.recipient.username}'
+
+class Schedule(models.Model):
+    client = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='schedules')
+    start_date = models.DateField()
+    end_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    town = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.client.name}'s Schedule for {self.travel_plan.destination}"
+
+    def duration(self):
+        # Returns the number of days for the trip
+        return (self.end_date - self.start_date).days
+
+class Activity(models.Model):
+    schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE, related_name='activities')
+    time = models.TimeField()
+    description = models.TextField()
+
+    def __str__(self):
+        return f"Activity at {self.time} - {self.description[:30]}..." 
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

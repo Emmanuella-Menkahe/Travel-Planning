@@ -1,0 +1,25 @@
+{% extends "pages/UserDashboard/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="content">
+        <h1>{{ schedule.name }}</h1>
+
+        <p>Trip at {{ schedule.town }} from <strong>{{ schedule.start_date }}</strong> to <strong>{{ schedule.end_date }}</strong></p>
+        
+        <h2>Activities</h2>
+        {% if schedule.activities.all %}
+            <ul>
+                {% for activity in schedule.activities.all %}
+                    <li>{{ activity.time }} - {{ activity.description }}</li>
+                {% endfor %}
+                <a href="{% url 'edit_schedule' schedule.id %}">Edit Schedule</a>
+            </ul>
+        {% else %}
+            <p>No activities found for this schedule.</p>
+        {% endif %}
+
+        <a href="{% url 'list_schedules' %}">Back to Schedules</a>
+    </div>
+
+{% endblock %}

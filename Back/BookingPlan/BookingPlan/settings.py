@@ -132,3 +132,8 @@ MESSAGE_TAGS = {
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
+CAMPAY_CLIENT_KEY = 'ODFMcCLiF5-StGH6-Pou5hqtb33JFPSb6AGWAJ0wfZRmtdCuL9FdEpsDcyhn7gh1w3VX7oy4kY484M7hOkOAOg'
+CAMPAY_CLIENT_SECRET = 'YNEYrEnd7y0PW94zrX4Zd_8CW13BxujrVZoNhU8zTmHl0MkGiUZgeoevalFjmaBVFnxyQQDm8LgHE60wyYcNig'
+CAMPAY_BASE_URL = 'https://api.campay.net/api'  # Or the appropriate endpoint
+
+

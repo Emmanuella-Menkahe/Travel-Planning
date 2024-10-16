@@ -1,0 +1,34 @@
+{% extends "pages/UserDashboard/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="content">
+        <h2>My Reservations</h2>
+
+        {% if reservations %}
+            <div class="reservations-list">
+                {% for reservation in reservations %}
+                    <div class="reservation">
+                        <div class="head">
+                            <a href="{% url 'cancel_reservation' reservation.id %}">Cancel</a>
+                            <a href="{% url 'update_reservation' reservation.id %}">Edit</a>
+                            <h3>Travel to {{ reservation.travel_plan.destination }}</h3>    
+                        </div>
+                        <p>Name: {{ reservation.full_name }}</p>
+                        <p>Agency: {{ reservation.travel_plan.agency }}</p>
+                        <p>Date: {{ reservation.travel_plan.date }}, {{ reservation.travel_plan.time }}</p>
+                        <p>Number of Places: {{ reservation.number_of_places }}</p>
+                        <p>Total Price: {{ reservation.total_price }} FCFA</p>
+                        <p>Status: {{ reservation.get_status_display }}</p>
+                        <button><a href="#">Make Payment</a></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>You have no reservations.</p>
+        {% endif %}
+    </div>
+
+
+{% endblock %}
+

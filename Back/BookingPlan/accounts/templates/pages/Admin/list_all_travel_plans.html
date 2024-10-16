@@ -40,6 +40,7 @@
             <p><strong>Status:</strong> {{ plan.status }}</p>
             <p><strong>Available Places:</strong> {{ plan.number_of_available_places }} / {{ plan.number_of_places }}</p>
             <p><strong>Agency:</strong> {{ plan.agency.name }}</p>
+            <button><a href="{% url 'list_travel_plan_reservations' travel_plan.id %}"></a>Reservations</button>
         </div>
         {% endfor %}
     </div>

@@ -1,0 +1,56 @@
+{% extends "pages/UserDashboard/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="content">
+        <h1>Edit Schedule</h1>
+
+        <form method="post" action="{% url 'edit_schedule' schedule.id %}">
+            {% csrf_token %}
+            <label for="name">Schedule Name</label>
+            <input type="text" name="name" required>
+
+            <label for="town">Destination</label>
+            <input type="text" name="town" required>
+
+            <label for="start_date">Start Date:</label>
+            <input type="date" name="start_date" value="{{ schedule.start_date }}" required>
+            
+            <label for="end_date">End Date:</label>
+            <input type="date" name="end_date" value="{{ schedule.end_date }}" required>
+
+            <h2>Edit Activities</h2>
+            <div id="activities">
+                {% for activity in schedule.activities.all %}
+                    <div class="activity">
+                        <label for="activity_time_{{ forloop.counter0 }}">Time:</label>
+                        <input type="time" name="activity_time" value="{{ activity.time }}" required>
+                        <label for="activity_description_{{ forloop.counter0 }}">Description:</label>
+                        <textarea name="activity_description" rows="2" required>{{ activity.description }}</textarea>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" onclick="addActivity()">Add Another Activity</button>
+            <br><br>
+            <button type="submit">Save Changes</button>
+        </form>
+
+        <a href="{% url 'list_schedules' %}">Back to Schedules</a>
+    </div>
+    
+    <script>
+        function addActivity() {
+            var activitiesDiv = document.getElementById('activities');
+            var newActivityDiv = document.createElement('div');
+            newActivityDiv.classList.add('activity');
+            newActivityDiv.innerHTML = `
+                <label for="activity_time">Time:</label>
+                <input type="time" name="activity_time" required>
+                <label for="activity_description">Description:</label>
+                <textarea name="activity_description" rows="2" required></textarea>
+            `;
+            activitiesDiv.appendChild(newActivityDiv);
+        }
+    </script>
+{% endblock %}

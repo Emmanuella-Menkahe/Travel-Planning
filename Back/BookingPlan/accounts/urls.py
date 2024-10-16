@@ -34,10 +34,23 @@ urlpatterns = [
     path('travel-plan/agency/<int:agency_id>/', views.list_agency_travel_client, name='list_agency_travel_client'),  # View by clients
     path('travel-plan/update/<int:travel_plan_id>/', views.update_travel_plan, name='update_travel_plan'),
     path('travel-plan/', views.list_all_travel_plan, name='list_all_travel_plan'),
+    path('notifications/', views.list_user_notifications, name='notifications'),
     #path('travel-plans/', views.list_travel_plans, name='list_travel'),  # View all (admins)
 
 
     path('reservation/<int:pk>/', views.reservation, name='reservation'),
+    path('reservations/', views.list_client_reservations, name='list_client_reservations'),
+    path('reservation/cancel/<int:reservation_id>/', views.cancel_reservation, name='cancel_reservation'),
+    path('reservation/update/<int:reservation_id>/', views.update_reservation, name='update_reservation'),
+    path('travel-plans/<int:travel_plan_id>/reservations/', views.list_travel_plan_reservations, name='list_travel_plan_reservations'),
+
+
+    path('schedule/create/', views.create_schedule, name='create_schedule'),
+    path('schedules/', views.list_schedules, name='list_schedules'),
+    path('schedules/<int:schedule_id>/', views.schedule_detail, name='schedule_detail'),
+    path('schedules/delete/<int:schedule_id>/', views.delete_schedule, name='delete_schedule'),
+    path('schedules/edit/<int:schedule_id>/', views.edit_schedule, name='edit_schedule'),
+
 
 
     path('destination/', views.dashboard_view, name='destination'),

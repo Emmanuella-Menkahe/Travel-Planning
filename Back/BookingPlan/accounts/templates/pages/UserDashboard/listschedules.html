@@ -1,0 +1,22 @@
+{% extends "pages/UserDashboard/base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="content">
+        <h1>Your Schedules</h1>
+
+        {% if schedules %}
+            {% for schedule in schedules %}
+                <div class="schedule">
+                    <a href="{% url 'schedule_detail' schedule.id %}"><h3>{{ schedule.name }}</h3></a>
+                    <p>At {{ schedule.town }} from <strong>{{ schedule.start_date }}</strong> to <strong>{{ schedule.end_date }}</strong></p>
+                    <a href="{% url 'delete_schedule' schedule.id %}">Delete</a>
+                </div>    
+            {% endfor %}
+        {% else %}
+            <p>You have no schedules yet.</p>
+        {% endif %}
+        
+        <a href="{% url 'create_schedule' %}">Create New Schedule</a>
+    </div>
+{% endblock %}

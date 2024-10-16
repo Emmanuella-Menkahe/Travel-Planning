@@ -1,0 +1,55 @@
+{% extends "pages/UserDashboard/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="conrent">       
+    <form method="post" action="{% url 'create_schedule' %}">
+        {% csrf_token %}
+        <label for="name">Schedule Name</label>
+        <input type="text" name="name" required>
+
+        <label for="town">Destination</label>
+        <input type="text" name="town" required>
+
+        <label for="start_date">Start Date:</label>
+        <input type="date" name="start_date" required>
+        
+        <label for="end_date">End Date:</label>
+        <input type="date" name="end_date" required>
+
+        
+        <div id="activities">
+            <h3>Activities</h3>
+            <div class="activity">
+                <label for="activity_time">Time:</label>
+                <input type="time" name="activity_time" required>
+                <label for="activity_description">Description:</label>
+                <textarea name="activity_description" rows="2" required></textarea>
+            </div>
+        </div>
+        
+        <button type="button" onclick="addActivity()">Add Another Activity</button>
+        <br>
+        <button type="submit">Create Schedule</button>
+    </form>
+</div>
+
+    
+    <script>
+    function addActivity() {
+        var activitiesDiv = document.getElementById('activities');
+        var newActivityDiv = document.createElement('div');
+        newActivityDiv.classList.add('activity');
+        newActivityDiv.innerHTML = `
+            <label for="activity_time">Time:</label>
+            <input type="time" name="activity_time" required>
+            <label for="activity_description">Description:</label>
+            <textarea name="activity_description" rows="2" required></textarea>
+        `;
+        activitiesDiv.appendChild(newActivityDiv);
+    }
+    </script>
+    
+
+
+{% endblock %}

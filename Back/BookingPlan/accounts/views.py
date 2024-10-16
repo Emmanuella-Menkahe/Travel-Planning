@@ -6,7 +6,7 @@ from django.contrib.auth.models import Group
 from django.contrib import messages
 from django.template.loader import render_to_string
 from django.http import HttpResponse
-from .models import CustomUser, Agency, TravelPlan, Reservation,  Profile, Destination, Accommodation, Booking
+from .models import CustomUser, Agency, TravelPlan, Reservation, Notification, Schedule, Activity, Profile, Destination, Accommodation, Booking
 from .forms import ProfileForm
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -14,6 +14,8 @@ from datetime import datetime, date
 from weasyprint import HTML
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
+from django.urls import reverse
+from .utils import initiate_payment
 
 User = get_user_model()  # This will return the custom user model
 
@@ -132,7 +134,7 @@ def edit_profile(request):
 #                    Admin View
 ###############################################################################################
 
-#@user_passes_test(lambda u: u.is_superuser)  # Only allow access to superusers
+@user_passes_test(lambda u: u.is_superuser)  # Only allow access to superusers
 def admin_home_view(request):
     total_users = CustomUser.objects.count()
     total_clients = CustomUser.objects.filter(roles='client').count()
@@ -153,8 +155,8 @@ def admin_home_view(request):
     return render(request, 'pages/Admin/adminhome.html', context)
 
 
-#@login_required
-#@user_passes_test(lambda u: u.is_superuser)
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
 def create_receptionist_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -194,7 +196,7 @@ def user_list_view(request):
     return render(request, 'admin_home.html', context)
 
 
-#@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_superuser)
 def delete_user_view(request, user_id):
     user = get_object_or_404(CustomUser, id=user_id)
 
@@ -247,7 +249,7 @@ def agency_home_view(request):
     return render(request, 'pages/Agency/agencyreceptionist.html', {'agency': agency})
 
 
-#@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_superuser)
 def create_agency_view(request):
     if request.method == 'POST':
         name = request.POST.get('name')
@@ -372,6 +374,7 @@ def create_travel_plan(request):
         departure = request.POST.get('departure')
         time = request.POST.get('time')
         price = request.POST.get('price')
+        type = request.POST.get('type')
         date = request.POST.get('date')
         destination = request.POST.get('destination')
         number_of_places = request.POST.get('number_of_places')
@@ -397,6 +400,7 @@ def create_travel_plan(request):
             date=date,
             destination=destination,
             price=price,
+            type=type,
             number_of_places=number_of_places,
             number_of_available_places=number_of_places,  # Initially set available places as total places
             status='active',  # Default to 'active'
@@ -404,7 +408,7 @@ def create_travel_plan(request):
         )
         travel_plan.save()
 
-        return redirect('list_all_travel_plans')  
+        return redirect(reverse('list_agency_travel_plans', kwargs={'agency_id':id}))  
 
     return render(request, 'pages/Agency/createtravel.html')
 
@@ -474,6 +478,7 @@ def update_travel_plan(request, travel_plan_id):
         time = request.POST.get('time')
         date = request.POST.get('date')
         price = request.POST.get('price')
+        type = request.POST.get('type')
         number_of_places = request.POST.get('number_of_places')
         status = request.POST.get('status')
 
@@ -489,11 +494,23 @@ def update_travel_plan(request, travel_plan_id):
         travel_plan.time = time
         travel_plan.date = date
         travel_plan.price = price
+        travel_plan.type = type
         travel_plan.number_of_places = number_of_places
         travel_plan.status = status
         travel_plan.number_of_available_places = number_of_places
 
         travel_plan.save()
+
+         # Create notifications for all clients who reserved this travel plan
+        reservations = Reservation.objects.filter(travel_plan=travel_plan)
+        message = f'Your trip to {travel_plan.destination} has been updated. Please check the new details.'
+        
+        for reservation in reservations:
+            Notification.objects.create(
+                recipient=reservation.user,
+                message=message,
+                notification_type='info'
+            )
 
         messages.success(request, 'Travel plan updated successfully.')
         return redirect('list_agency_travel_plans', agency_id=agency.id)
@@ -508,11 +525,26 @@ def delete_travel_plan(request, travel_plan_id):
     if not request.user.is_authenticated or request.user != agency.agency_receptionist:
         messages.error(request, 'You do not have permission to delete this travel plan.')
         return redirect('')
+    
+     # Create notifications for all clients who reserved this travel plan
+    reservations = Reservation.objects.filter(travel_plan=travel_plan)
+    message = f'Your trip to {travel_plan.destination} has been updated. Please check the new details.'
+        
+    for reservation in reservations:
+        Notification.objects.create(
+            recipient=reservation.user,
+            message=message,
+            notification_type='info'
+        )
 
     travel_plan.delete()
     messages.success(request, 'Travel plan deleted successfully.')
     return redirect('list_agency_travel_plans', agency_id=agency.id)
 
+@login_required
+def list_user_notifications(request):
+    notifications = request.user.notifications.all().order_by('-created_at')
+    return render(request, 'pages/UserDashboard/notifications.html', {'notifications': notifications})
 
 
 ###############################################################################################
@@ -524,24 +556,227 @@ def reservation(request, pk):
     travel_plan = get_object_or_404(TravelPlan, pk=pk)
 
     if request.method == 'POST':
+        full_name = request.POST.get('full_name')
         number_of_places = request.POST.get('number_of_places')
+        phone_number = request.POST.get('phone_number')
         id_card_number = request.POST.get('id_card_number')
+        total_price = 5000.00 
 
         reservation = Reservation(
             travel_plan=travel_plan,
             user=request.user,
+            full_name=full_name,
+            phone_number=phone_number,
             number_of_places=number_of_places,
+            total_price=total_price,
             id_card_number=id_card_number
         )
 
+        if travel_plan.number_of_available_places == 0:
+            travel_plan.status = 'complete'
+
         try:
             reservation.save()
-            messages.success(request, 'Reservation successfully.')
-            return redirect('list_travel_plans')
+
+            payment_response = initiate_payment(phone_number, total_price, f'Reservation for {travel_plan.destination} by {travel_plan.agency}')
+
+            # Check payment status
+            if payment_response.get('status') == 'SUCCESS':
+                messages.success(request, 'Reservation and payment completed successfully.')
+                #messages.success(request, 'Reservation successful.')
+                return redirect('list_client_reservations')
+        except ValidationError as e:
+            #messages.error(request, 'not successful'.join(e.messages))
+            reservation.delete()
+            messages.error(request, 'Payment failed. Please try again.')
+            return redirect('create_reservation', travel_plan_id=pk)
+
+            #messages.error(request, e)
+
+
+    return render(request, 'pages/UserDashboard/reservation.html',  {'travel_plan': travel_plan})
+
+
+def list_client_reservations(request):
+    if not request.user.is_authenticated:
+        return redirect('login')  
+
+    client_reservations = Reservation.objects.filter(user=request.user)
+    return render(request, 'pages/UserDashboard/clientreservation.html', {'reservations': client_reservations})
+
+#List reservations of a travel plan
+def list_travel_plan_reservations(request, travel_plan_id):
+    travel_plan = get_object_or_404(TravelPlan, id=travel_plan_id)
+    reservations = Reservation.objects.filter(travel_plan=travel_plan)
+    
+    return render(request, 'pages/Agency/list_travel_plan_reservations.html', {'travel_plan': travel_plan,'reservations': reservations})
+
+
+def update_reservation(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+
+    if request.user != reservation.user:
+        messages.error(request, 'You do not have permission to edit this reservation.')
+        return redirect('list_client_reservations')
+
+    if request.method == 'POST':
+        number_of_places = request.POST.get('number_of_places')
+        id_card_number = request.POST.get('id_card_number')
+        full_name = request.POST.get('full_name')
+        phone_number = request.POST.get('phone_number')
+
+        reservation.number_of_places = number_of_places
+        reservation.id_card_number = id_card_number
+        reservation.full_name = full_name
+        reservation.phone_number = phone_number
+
+        try:
+            reservation.save()
+            messages.success(request, 'Reservation updated successfully.')
+            return redirect('list_client_reservations')
         except ValidationError as e:
             messages.error(request, ', '.join(e.messages))
 
-    return render(request, 'pages/UserDashboard/reservation.html',  {'travel_plan': travel_plan})
+    return render(request, 'pages/UserDashboard/updatereservation.html', {'reservation': reservation})
+
+
+
+def cancel_reservation(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+
+    if not request.user.is_authenticated or (request.user != reservation.user and not request.user.is_superuser):
+        messages.error(request, 'You do not have permission to cancel this reservation.')
+        return redirect('list_client_reservations')
+
+    reservation.travel_plan.number_of_available_places += reservation.number_of_places
+    reservation.travel_plan.save()
+
+    reservation.delete()
+    messages.success(request, 'Reservation canceled successfully.')
+    return redirect('list_client_reservations')
+
+
+
+###############################################################################################
+#                    Schedule and activity View
+###############################################################################################
+
+
+@login_required
+def create_schedule(request):
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        name = request.POST.get('name')
+        town = request.POST.get('town')
+        activity_times = request.POST.getlist('activity_time')
+        activity_descriptions = request.POST.getlist('activity_description')
+
+        if start_date >= end_date:
+            messages.error(request, 'End date must be after start date.')
+            return redirect('create_schedule')
+
+        # Create the schedule
+        schedule = Schedule.objects.create(
+            client=request.user,
+            start_date=start_date,
+            end_date=end_date,
+            name=name,
+            town=town
+        )
+
+        # Create associated activities using zip
+        for time, description in zip(activity_times, activity_descriptions):
+            if time and description:  # Ensure both fields are provided
+                Activity.objects.create(schedule=schedule, time=time, description=description)
+
+        messages.success(request, 'Schedule and activities created successfully.')
+        return redirect('list_schedules')
+
+    return render(request, 'pages/UserDashboard/createschedule.html')
+
+
+@login_required
+def list_schedules(request):
+    schedules = Schedule.objects.filter(client=request.user)
+
+    return render(request, 'pages/UserDashboard/listschedules.html', {'schedules': schedules})
+
+
+@login_required
+def list_all_schedules(request):
+    # Get the schedules for the logged-in user
+    if request.user.is_superuser:
+        # Admin can see all schedules
+        schedules = Schedule.objects.all()
+    else:
+        # Regular users only see their own schedules
+        schedules = Schedule.objects.filter(client=request.user)
+
+    return render(request, 'list_schedules.html', {'schedules': schedules})
+
+
+@login_required
+def schedule_detail(request, schedule_id):
+    schedule = get_object_or_404(Schedule, id=schedule_id, client=request.user)
+    
+    return render(request, 'pages/UserDashboard/scheduledetail.html', {'schedule': schedule})
+
+
+@login_required
+def delete_schedule(request, schedule_id):
+    schedule = get_object_or_404(Schedule, id=schedule_id)
+
+    if request.user != schedule.client and not request.user.is_superuser:
+        messages.error(request, "You do not have permission to delete this schedule.")
+        return redirect('list_schedules')
+
+    # Delete the schedule
+    schedule.delete()
+    messages.success(request, "Schedule deleted successfully.")
+    return redirect('list_schedules')
+
+@login_required
+def edit_schedule(request, schedule_id):
+    schedule = get_object_or_404(Schedule, id=schedule_id, client=request.user)
+
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        name = request.POST.get('name')
+        town = request.POST.get('town')
+        activity_times = request.POST.getlist('activity_time')
+        activity_descriptions = request.POST.getlist('activity_description')
+
+        # Validate dates
+        if start_date >= end_date:
+            messages.error(request, 'End date must be after start date.')
+            return redirect('edit_schedule', schedule_id=schedule_id)
+
+        # Update schedule details
+        schedule.start_date = start_date
+        schedule.end_date = end_date
+        schedule.name = name
+        schedule.town = town
+        schedule.save()
+
+        # Clear existing activities
+        schedule.activities.all().delete()
+
+        # Create associated activities using zip
+        for time, description in zip(activity_times, activity_descriptions):
+            if time and description:  # Ensure both fields are provided
+                Activity.objects.create(schedule=schedule, time=time, description=description)
+
+        messages.success(request, 'Schedule and activities updated successfully.')
+        return redirect('list_schedules')
+
+    return render(request, 'pages/UserDashboard/editschedule.html', {'schedule': schedule})
+
+
+
+
+
 
 
 

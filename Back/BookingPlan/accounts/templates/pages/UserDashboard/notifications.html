@@ -1,0 +1,29 @@
+{% extends "pages/UserDashboard/base.html" %}
+{% load static %}
+
+{% block content %}
+    <style>
+        .notification {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        .notification.read {
+            background-color: #f0f0f0;
+        }
+    </style>
+    <div class="content">    
+        <h2>My Notifications</h2>
+
+        {% for notification in notifications %}
+            <div class="notification {% if notification.is_read %}read{% endif %}">
+                <p>{{ notification.message }}</p>
+                <small>{{ notification.created_at }}</small>
+                <small>Type: {{ notification.get_notification_type_display }}</small>
+            </div>
+        {% empty %}
+            <p>You have no notifications.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

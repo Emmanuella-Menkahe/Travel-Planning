@@ -22,6 +22,9 @@
         <label for="price">Price:</label>
         <input type="number" step="0.01" id="price" name="price" required><br>
 
+        <label for="type">Type:</label>
+        <input type="text" id="type" name="type" placeholder="simple, classic or vip" required><br>
+
         <label for="date">Date:</label>
         <input type="date" id="date" name="date" required><br>
 
@@ -43,7 +46,6 @@
         <button type="submit">Create Travel Plan</button>
     </form>
 
-    <a href="{% url 'list_all_travel_plans' %}">Back to Travel Plans List</a>
 </body>
 </html>
 
