@@ -10,8 +10,10 @@
                 {% for reservation in reservations %}
                     <div class="reservation">
                         <div class="head">
-                            <a href="{% url 'cancel_reservation' reservation.id %}">Cancel</a>
-                            <a href="{% url 'update_reservation' reservation.id %}">Edit</a>
+                            <div class="btn">
+                                <a href="{% url 'cancel_reservation' reservation.id %}">Cancel</a>
+                                <a href="{% url 'update_reservation' reservation.id %}">Edit</a>
+                            </div>
                             <h3>Travel to {{ reservation.travel_plan.destination }}</h3>    
                         </div>
                         <p>Name: {{ reservation.full_name }}</p>
